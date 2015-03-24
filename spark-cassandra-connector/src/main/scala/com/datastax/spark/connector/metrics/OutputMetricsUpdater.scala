@@ -53,8 +53,14 @@ private class DummyOutputMetricsUpdater extends OutputMetricsUpdater {
 }
 
 object OutputMetricsUpdater extends Logging {
+  val OutputMetricsEnabledProperty = "spark.cassandra.output.metrics"
+
+  val Properties = Seq(
+    OutputMetricsEnabledProperty
+  )
+
   lazy val detailedMetricsEnabled =
-    SparkEnv.get.conf.getBoolean("spark.cassandra.output.metrics", defaultValue = true)
+    SparkEnv.get.conf.getBoolean(OutputMetricsEnabledProperty, defaultValue = true)
 
   def apply(taskContext: TaskContext, writeConf: WriteConf): OutputMetricsUpdater = {
     CassandraConnectorSource.ensureInitialized

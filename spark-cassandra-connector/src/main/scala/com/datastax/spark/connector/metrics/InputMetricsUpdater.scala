@@ -61,8 +61,14 @@ private class DummyInputMetricsUpdater extends InputMetricsUpdater {
 }
 
 object InputMetricsUpdater {
+  val InputMetricsEnabledProperty = "spark.cassandra.input.metrics"
+
+  val Properties = Seq(
+    InputMetricsEnabledProperty
+  )
+
   lazy val detailedMetricsEnabled =
-    SparkEnv.get.conf.getBoolean("spark.cassandra.input.metrics", defaultValue = true)
+    SparkEnv.get.conf.getBoolean(InputMetricsEnabledProperty, defaultValue = true)
 
   def apply(taskContext: TaskContext, groupSize: Int): InputMetricsUpdater = {
     CassandraConnectorSource.ensureInitialized
