@@ -19,7 +19,6 @@ import sbt._
 import sbt.Keys._
 
 object CassandraSparkBuild extends Build {
-  import Versions.scalaBinary
   import Settings._
 
   aggregate in update := false
@@ -28,7 +27,15 @@ object CassandraSparkBuild extends Build {
 
   val demosPath = file(s"$namespace-demos")
 
-  lazy val root = RootProject("root", file("."), Seq(embedded, connector, jconnector, demos))
+  val scala211 = sys.props.get("scala-2.11") match {
+    case Some(is) if is.nonEmpty && is.toBoolean => true
+    case _ => false
+  }
+
+  lazy val root = RootProject("root", file("."),
+    if (scala211) Seq(embedded, connector, demos)
+    else Seq(embedded, connector, demos, jconnector)
+  )
 
   lazy val embedded = CrossScalaVersionsProject(
     name = s"$namespace-embedded",
@@ -53,11 +60,15 @@ object CassandraSparkBuild extends Build {
 
   lazy val demos = RootProject("demos", demosPath, Seq(simpleDemos, kafkaStreaming, twitterStreaming))
 
-  lazy val simpleDemos = Project(
-    id = "simple-demos",
-    base = demosPath / "simple-demos",
-    settings = demoSettings,
-    dependencies = Seq(connector, jconnector, embedded)
+  lazy val simpleDemos =
+    Project(
+      id = "simple-demos",
+      base = demosPath / "simple-demos",
+      settings = demoSettings ++ Seq(
+        excludeFilter in unmanagedSources := (if (scala211)
+          HiddenFileFilter || "*.java" else HiddenFileFilter)),
+      dependencies = if (scala211)
+        Seq(connector, embedded) else Seq(connector, jconnector, embedded)
   )
 
   lazy val kafkaStreaming = CrossScalaVersionsProject(
